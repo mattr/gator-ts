@@ -1,10 +1,23 @@
-import { readConfig, setUser } from "./config.js";
+import { type CommandRegistry, handlerLogin, registerCommand, runCommand } from "./handlers.js";
 
 function main() {
-  setUser("matt");
+  const registry: CommandRegistry = {}
+  registerCommand(registry,"login", handlerLogin);
 
-  const config = readConfig();
-  console.log(JSON.stringify(config, null, 2));
+  // [node, file, cmdName, [args]]
+  const [_node, _file, cmdName, ...args] = process.argv;
+
+  if (!cmdName) {
+    console.log("no command provided");
+    process.exit(1);
+  }
+
+  try {
+    runCommand(registry, cmdName, ...args);
+  } catch (e: any) {
+    console.log(e.message);
+    process.exit(1);
+  }
 }
 
 main();
