@@ -1,9 +1,18 @@
-import { type CommandRegistry, handlerLogin, registerCommand, runCommand } from "./handlers.js";
+import {
+  type CommandRegistry,
+  handlerLogin,
+  handlerRegister,
+  handlerReset,
+  registerCommand,
+  runCommand
+} from "./handlers.js";
 
-function main() {
-  const registry: CommandRegistry = {}
-  registerCommand(registry,"login", handlerLogin);
+const registry: CommandRegistry = {}
+registerCommand(registry,"login", handlerLogin);
+registerCommand(registry, "register", handlerRegister);
+registerCommand(registry, "reset", handlerReset);
 
+async function main() {
   // [node, file, cmdName, [args]]
   const [_node, _file, cmdName, ...args] = process.argv;
 
@@ -13,11 +22,12 @@ function main() {
   }
 
   try {
-    runCommand(registry, cmdName, ...args);
+    await runCommand(registry, cmdName, ...args);
+    process.exit(0);
   } catch (e: any) {
     console.log(e.message);
     process.exit(1);
   }
 }
 
-main();
+await main();

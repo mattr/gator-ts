@@ -11,9 +11,9 @@ export function readConfig() {
   return validateConfig(rawConfig);
 }
 
-export function setUser(user: string) {
+export function setUser(name: string) {
   const config = readConfig();
-  config.currentUserName = user;
+  config.currentUserName = name;
   writeConfig(config);
 }
 
