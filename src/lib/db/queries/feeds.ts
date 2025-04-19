@@ -9,3 +9,7 @@ export async function createFeed(name: string, url: string, userId: string) {
 export async function deleteFeeds() {
   return db.delete(feeds).returning();
 }
+
+export async function getFeeds() {
+  return db.select().from(feeds);
+}

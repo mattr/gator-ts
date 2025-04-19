@@ -1,7 +1,7 @@
 import { readConfig, setUser } from "./config.js";
-import { createUser, deleteUsers, getUserByName, getUsers } from "./lib/db/queries/users.js";
+import { createUser, deleteUsers, getUserById, getUserByName, getUsers } from "./lib/db/queries/users.js";
 import { fetchFeed } from "./feed";
-import { createFeed, deleteFeeds } from "./lib/db/queries/feeds.js";
+import { createFeed, deleteFeeds, getFeeds } from "./lib/db/queries/feeds.js";
 import { Feed, User } from "./lib/db/schema.js";
 
 export type CommandHandler = (cmdName: string, ...args: string[]) => Promise<void>;
@@ -82,6 +82,14 @@ export async function handlerAddFeed(cmdName: string, ...args: string[]) {
   const user = await getUserByName(readConfig().currentUserName);
   const feed = await createFeed(name, url, user.id);
   printFeed(feed, user);
+}
+
+export async function handlerFeeds(cmdName: string, ...args: string[]) {
+  const feeds = await getFeeds();
+  for (const feed of feeds) {
+    const user = await getUserById(feed.userId);
+    console.log(`${feed.name}: ${feed.url} (${user.name})`);
+  }
 }
 
 function printFeed(feed: Feed, user: User) {
