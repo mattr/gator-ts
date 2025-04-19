@@ -1,6 +1,8 @@
 import { readConfig, setUser } from "./config.js";
 import { createUser, deleteUsers, getUserByName, getUsers } from "./lib/db/queries/users.js";
 import { fetchFeed } from "./feed";
+import { createFeed, deleteFeeds } from "./lib/db/queries/feeds.js";
+import { Feed, User } from "./lib/db/schema.js";
 
 export type CommandHandler = (cmdName: string, ...args: string[]) => Promise<void>;
 export type CommandRegistry = Record<string, CommandHandler>;
@@ -49,8 +51,10 @@ export async function handlerRegister(cmdName: string, ...args: string[]) {
 }
 
 export async function handlerReset(cmdName: string, ...args: string[]) {
-  const result = await deleteUsers();
-  console.log(`deleted ${result.length} users`);
+  const users = await deleteUsers();
+  const feeds = await deleteFeeds();
+  console.log(`deleted ${users.length} users`);
+  console.log(`deleted ${feeds.length} feeds`);
 }
 
 export async function handlerUsers(cmdName: string, ...args: string[]) {
@@ -64,4 +68,23 @@ export async function handlerUsers(cmdName: string, ...args: string[]) {
 export async function handlerAgg(cmdName: string, ...args: string[]) {
   const feed = await fetchFeed("https://www.wagslane.dev/index.xml");
   console.log(JSON.stringify(feed, null, 2));
+}
+
+export async function handlerAddFeed(cmdName: string, ...args: string[]) {
+  const [name, url] = args;
+  if (!name) {
+    throw new Error("no feed name provided");
+  }
+  if (!url) {
+    throw new Error("no feed url provided");
+  }
+
+  const user = await getUserByName(readConfig().currentUserName);
+  const feed = await createFeed(name, url, user.id);
+  printFeed(feed, user);
+}
+
+function printFeed(feed: Feed, user: User) {
+  console.log("feed", JSON.stringify(feed, null, 2));
+  console.log("user", JSON.stringify(user, null, 2));
 }

@@ -1,5 +1,6 @@
 import {
   type CommandRegistry,
+  handlerAddFeed,
   handlerAgg,
   handlerLogin,
   handlerRegister,
@@ -15,6 +16,7 @@ registerCommand(registry, "register", handlerRegister);
 registerCommand(registry, "reset", handlerReset);
 registerCommand(registry, "users", handlerUsers);
 registerCommand(registry, "agg", handlerAgg);
+registerCommand(registry, "addfeed", handlerAddFeed);
 
 async function main() {
   // [node, file, cmdName, [args]]
