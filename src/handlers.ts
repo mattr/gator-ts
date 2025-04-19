@@ -1,5 +1,5 @@
-import { setUser } from "./config.js";
-import { createUser, deleteUsers, getUserByName } from "./lib/db/queries/users.js";
+import { readConfig, setUser } from "./config.js";
+import { createUser, deleteUsers, getUserByName, getUsers } from "./lib/db/queries/users.js";
 
 export type CommandHandler = (cmdName: string, ...args: string[]) => Promise<void>;
 export type CommandRegistry = Record<string, CommandHandler>;
@@ -50,4 +50,12 @@ export async function handlerRegister(cmdName: string, ...args: string[]) {
 export async function handlerReset(cmdName: string, ...args: string[]) {
   const result = await deleteUsers();
   console.log(`deleted ${result.length} users`);
+}
+
+export async function handlerUsers(cmdName: string, ...args: string[]) {
+  const users = await getUsers();
+  users.forEach((user) => {
+    const current = readConfig().currentUserName == user.name;
+    console.log(`* ${user.name}${current ? ' (current)' : ''}`)
+  });
 }
