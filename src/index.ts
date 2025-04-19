@@ -1,17 +1,20 @@
 import {
   type CommandRegistry,
+  handlerAgg,
   handlerLogin,
   handlerRegister,
-  handlerReset, handlerUsers,
+  handlerReset,
+  handlerUsers,
   registerCommand,
   runCommand
 } from "./handlers.js";
 
 const registry: CommandRegistry = {}
-registerCommand(registry,"login", handlerLogin);
+registerCommand(registry, "login", handlerLogin);
 registerCommand(registry, "register", handlerRegister);
 registerCommand(registry, "reset", handlerReset);
 registerCommand(registry, "users", handlerUsers);
+registerCommand(registry, "agg", handlerAgg);
 
 async function main() {
   // [node, file, cmdName, [args]]
