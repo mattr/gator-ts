@@ -3,6 +3,8 @@ import {
   handlerAddFeed,
   handlerAgg,
   handlerFeeds,
+  handlerFollow,
+  handlerFollowing,
   handlerLogin,
   handlerRegister,
   handlerReset,
@@ -19,6 +21,8 @@ registerCommand(registry, "users", handlerUsers);
 registerCommand(registry, "agg", handlerAgg);
 registerCommand(registry, "addfeed", handlerAddFeed);
 registerCommand(registry, "feeds", handlerFeeds);
+registerCommand(registry, "follow", handlerFollow);
+registerCommand(registry, "following", handlerFollowing);
 
 async function main() {
   // [node, file, cmdName, [args]]
