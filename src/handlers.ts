@@ -3,9 +3,10 @@ import { createUser, deleteUsers, getUserById, getUserByName, getUsers } from ".
 import { fetchFeed } from "./feed";
 import { createFeed, deleteFeeds, getFeedByUrl, getFeeds } from "./lib/db/queries/feeds.js";
 import { Feed, User } from "./lib/db/schema.js";
-import { createFeedFollow, getFeedFollowsForUser } from "./lib/db/queries/feed-follows";
+import { createFeedFollow, deleteFeedFollow, getFeedFollowsForUser } from "./lib/db/queries/feed-follows";
 
 export type CommandHandler = (cmdName: string, ...args: string[]) => Promise<void>;
+export type UserCommandHandler = (cmdName: string, user: User, ...args: string[]) => Promise<void>;
 export type CommandRegistry = Record<string, CommandHandler>;
 
 export function registerCommand(registry: CommandRegistry, cmdName: string, handler: CommandHandler) {
@@ -71,7 +72,7 @@ export async function handlerAgg(cmdName: string, ...args: string[]) {
   console.log(JSON.stringify(feed, null, 2));
 }
 
-export async function handlerAddFeed(cmdName: string, ...args: string[]) {
+export async function handlerAddFeed(cmdName: string, user: User, ...args: string[]) {
   const [name, url] = args;
   if (!name) {
     throw new Error("no feed name provided");
@@ -80,7 +81,6 @@ export async function handlerAddFeed(cmdName: string, ...args: string[]) {
     throw new Error("no feed url provided");
   }
 
-  const user = await getUserByName(readConfig().currentUserName);
   const feed = await createFeed(name, url, user.id);
   await createFeedFollow(user.id, feed.id);
   printFeed(feed, user);
@@ -94,7 +94,7 @@ export async function handlerFeeds(cmdName: string, ...args: string[]) {
   }
 }
 
-export async function handlerFollow(cmdName: string, ...args: string[]) {
+export async function handlerFollow(cmdName: string, user: User, ...args: string[]) {
   const url = args[0];
   if (!url) {
     throw new Error("no feed url provided to follow");
@@ -106,23 +106,13 @@ export async function handlerFollow(cmdName: string, ...args: string[]) {
     throw new Error("feed not found");
   }
 
-  const user = await getUserByName(readConfig().currentUserName);
-  if (!user) {
-    throw new Error("no user logged in");
-  }
-
   const follow = await createFeedFollow(user.id, feed.id);
   if (follow) {
     console.log(`${follow.userName} is now following "${follow.feedName}"`);
   }
 }
 
-export async function handlerFollowing(cmdName: string, ...args: string[]) {
-  const user = await getUserByName(readConfig().currentUserName);
-  if (!user) {
-    throw new Error("no user logged in");
-  }
-
+export async function handlerFollowing(cmdName: string, user: User, ...args: string[]) {
   const follows = await getFeedFollowsForUser(user.id);
   console.log(`${user.name} is following:`);
   follows.forEach((follow) => {

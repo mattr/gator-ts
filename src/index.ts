@@ -1,4 +1,5 @@
 import {
+  type CommandHandler,
   type CommandRegistry,
   handlerAddFeed,
   handlerAgg,
@@ -10,8 +11,22 @@ import {
   handlerReset,
   handlerUsers,
   registerCommand,
-  runCommand
+  runCommand,
+  type UserCommandHandler
 } from "./handlers.js";
+import { readConfig } from "./config";
+import { getUserByName } from "./lib/db/queries/users";
+
+function middlewareLoggedIn(handler: UserCommandHandler): CommandHandler {
+  return async function(cmdName: string, ...args: string[]) {
+    const user = await getUserByName(readConfig().currentUserName);
+    if (!user) {
+      throw new Error("user not found");
+    }
+
+    return handler(cmdName, user, ...args);
+  }
+}
 
 const registry: CommandRegistry = {}
 registerCommand(registry, "login", handlerLogin);
@@ -19,10 +34,10 @@ registerCommand(registry, "register", handlerRegister);
 registerCommand(registry, "reset", handlerReset);
 registerCommand(registry, "users", handlerUsers);
 registerCommand(registry, "agg", handlerAgg);
-registerCommand(registry, "addfeed", handlerAddFeed);
 registerCommand(registry, "feeds", handlerFeeds);
-registerCommand(registry, "follow", handlerFollow);
-registerCommand(registry, "following", handlerFollowing);
+registerCommand(registry, "addfeed", middlewareLoggedIn(handlerAddFeed));
+registerCommand(registry, "follow", middlewareLoggedIn(handlerFollow));
+registerCommand(registry, "following", middlewareLoggedIn(handlerFollowing));
 
 async function main() {
   // [node, file, cmdName, [args]]
