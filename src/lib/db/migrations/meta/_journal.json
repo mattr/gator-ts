@@ -36,6 +36,13 @@
       "when": 1745132807579,
       "tag": "0004_complete_doorman",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1745140028086,
+      "tag": "0005_charming_talos",
+      "breakpoints": true
     }
   ]
 }

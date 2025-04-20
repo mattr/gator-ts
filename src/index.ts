@@ -3,6 +3,7 @@ import {
   type CommandRegistry,
   handlerAddFeed,
   handlerAgg,
+  handlerBrowse,
   handlerFeeds,
   handlerFollow,
   handlerFollowing,
@@ -40,6 +41,7 @@ registerCommand(registry, "addfeed", middlewareLoggedIn(handlerAddFeed));
 registerCommand(registry, "follow", middlewareLoggedIn(handlerFollow));
 registerCommand(registry, "following", middlewareLoggedIn(handlerFollowing));
 registerCommand(registry, "unfollow", middlewareLoggedIn(handlerUnfollow));
+registerCommand(registry, "browse", middlewareLoggedIn(handlerBrowse));
 
 async function main() {
   // [node, file, cmdName, [args]]

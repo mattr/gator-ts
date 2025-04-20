@@ -9,9 +9,9 @@ import {
   getNextFeedToFetch,
   markFeedFetched
 } from "./lib/db/queries/feeds.js";
-import type { Feed, User } from "./lib/db/schema.js";
+import type { Feed, NewPost, User } from "./lib/db/schema.js";
 import { createFeedFollow, deleteFeedFollow, getFeedFollowsForUser } from "./lib/db/queries/feed-follows";
-import { type RSSItem } from "./feed"
+import { createPost, getPostsForUser } from "./lib/db/queries/posts.js";
 
 export type CommandHandler = (cmdName: string, ...args: string[]) => Promise<void>;
 export type UserCommandHandler = (cmdName: string, user: User, ...args: string[]) => Promise<void>;
@@ -161,6 +161,22 @@ export async function handlerUnfollow(cmdName: string, user: User, ...args: stri
   console.log(`unfollowed ${feed.name}`);
 }
 
+export async function handlerBrowse(cmdName: string, user: User, ...args: string[]) {
+  let limit = 2;
+  if (args.length > 0) {
+    limit = parseInt(args[0]);
+  }
+  const posts = await getPostsForUser(user.id, limit);
+  for (const post of posts) {
+    console.log(post.title)
+    console.log("--------");
+    console.log(post.url)
+    console.log("--------")
+    console.log(post.description);
+    console.log("\n");
+  }
+}
+
 function printFeed(feed: Feed, user: User) {
   console.log("feed", JSON.stringify(feed, null, 2));
   console.log("user", JSON.stringify(user, null, 2));
@@ -171,11 +187,32 @@ async function scrapeFeeds() {
   await markFeedFetched(feed.id);
   const rss = await fetchFeed(feed.url)
   console.log(rss.channel.title);
-  rss.channel.item.forEach((item: RSSItem) => {
-    console.log(`* ${item.title}: ${item.link}`);
-  });
+  for (const item of rss.channel.item) {
+    try {
+      const publishedAt = parseDate(item.pubDate);
+      const post: NewPost = {
+        title: item.title,
+        feedId: feed.id,
+        url: item.link,
+        description: item.description,
+        publishedAt,
+      }
+      await createPost(post);
+    } catch (error) {
+      console.error(error);
+    }
+  }
 }
 
+function parseDate(date: string) {
+  try {
+    const time = Date.parse(date);
+    return new Date(time);
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+}
 
 function handleError(err: Error) {
   console.error(err);
