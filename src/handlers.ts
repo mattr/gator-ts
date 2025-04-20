@@ -120,6 +120,21 @@ export async function handlerFollowing(cmdName: string, user: User, ...args: str
   });
 }
 
+export async function handlerUnfollow(cmdName: string, user: User, ...args: string[]) {
+  const url = args[0];
+  if (!url) {
+    throw new Error("unfollow requires a url");
+  }
+
+  const feed = await getFeedByUrl(url);
+  if (!feed) {
+    throw new Error("feed not found");
+  }
+
+  await deleteFeedFollow(user.id, feed.id);
+  console.log(`unfollowed ${feed.name}`);
+}
+
 function printFeed(feed: Feed, user: User) {
   console.log("feed", JSON.stringify(feed, null, 2));
   console.log("user", JSON.stringify(user, null, 2));

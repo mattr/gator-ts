@@ -9,6 +9,7 @@ import {
   handlerLogin,
   handlerRegister,
   handlerReset,
+  handlerUnfollow,
   handlerUsers,
   registerCommand,
   runCommand,
@@ -38,6 +39,7 @@ registerCommand(registry, "feeds", handlerFeeds);
 registerCommand(registry, "addfeed", middlewareLoggedIn(handlerAddFeed));
 registerCommand(registry, "follow", middlewareLoggedIn(handlerFollow));
 registerCommand(registry, "following", middlewareLoggedIn(handlerFollowing));
+registerCommand(registry, "unfollow", middlewareLoggedIn(handlerUnfollow));
 
 async function main() {
   // [node, file, cmdName, [args]]
