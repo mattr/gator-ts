@@ -1,9 +1,17 @@
 import { readConfig, setUser } from "./config.js";
 import { createUser, deleteUsers, getUserById, getUserByName, getUsers } from "./lib/db/queries/users.js";
 import { fetchFeed } from "./feed";
-import { createFeed, deleteFeeds, getFeedByUrl, getFeeds } from "./lib/db/queries/feeds.js";
-import { Feed, User } from "./lib/db/schema.js";
+import {
+  createFeed,
+  deleteFeeds,
+  getFeedByUrl,
+  getFeeds,
+  getNextFeedToFetch,
+  markFeedFetched
+} from "./lib/db/queries/feeds.js";
+import type { Feed, User } from "./lib/db/schema.js";
 import { createFeedFollow, deleteFeedFollow, getFeedFollowsForUser } from "./lib/db/queries/feed-follows";
+import { type RSSItem } from "./feed"
 
 export type CommandHandler = (cmdName: string, ...args: string[]) => Promise<void>;
 export type UserCommandHandler = (cmdName: string, user: User, ...args: string[]) => Promise<void>;
@@ -68,8 +76,26 @@ export async function handlerUsers(cmdName: string, ...args: string[]) {
 }
 
 export async function handlerAgg(cmdName: string, ...args: string[]) {
-  const feed = await fetchFeed("https://www.wagslane.dev/index.xml");
-  console.log(JSON.stringify(feed, null, 2));
+  const timeStr = args[0];
+  if (!timeStr) {
+    throw new Error("no interval provided");
+  }
+
+  const timeBetweenRequests = parseInterval(timeStr);
+
+  scrapeFeeds().catch(handleError);
+
+  const interval = setInterval(() => {
+    scrapeFeeds().catch(handleError);
+  }, timeBetweenRequests);
+
+  await new Promise<void>((resolve) => {
+    process.on("SIGINT", () => {
+      console.log("Shutting down feed aggregator...");
+      clearInterval(interval);
+      resolve();
+    });
+  });
 }
 
 export async function handlerAddFeed(cmdName: string, user: User, ...args: string[]) {
@@ -138,4 +164,41 @@ export async function handlerUnfollow(cmdName: string, user: User, ...args: stri
 function printFeed(feed: Feed, user: User) {
   console.log("feed", JSON.stringify(feed, null, 2));
   console.log("user", JSON.stringify(user, null, 2));
+}
+
+async function scrapeFeeds() {
+  const feed = await getNextFeedToFetch();
+  await markFeedFetched(feed.id);
+  const rss = await fetchFeed(feed.url)
+  console.log(rss.channel.title);
+  rss.channel.item.forEach((item: RSSItem) => {
+    console.log(`* ${item.title}: ${item.link}`);
+  });
+}
+
+
+function handleError(err: Error) {
+  console.error(err);
+}
+
+function parseInterval(durationStr: string) {
+  const regex = /^(\d+)(ms|s|m|h)$/;
+  const match = durationStr.match(regex);
+  if (!match) {
+    throw new Error("invalid interval");
+  }
+
+  const num = parseInt(match[1]);
+  const interval = match[2];
+  if (!interval) {
+    throw new Error("invalid interval");
+  } else if (interval === "ms") {
+    return num;
+  } else if (interval === "s") {
+    return num * 1000;
+  } else if (interval === "m") {
+    return num * 1000 * 60;
+  } else if (interval === "h") {
+    return num * 1000 * 60 * 60;
+  }
 }
